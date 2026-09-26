@@ -1,0 +1,12 @@
+{
+  "appId": "de.vanwuellen.finanzc",
+  "appName": "Finanzen C",
+  "webDir": "www",
+  "android": {
+    "allowMixedContent": false,
+    "captureInput": true
+  },
+  "server": {
+    "androidScheme": "https"
+  }
+}

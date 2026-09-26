@@ -1,0 +1,24 @@
+/* Finanzübersicht C · Android-App · Ergänzungen für das Handy */
+.fua-fab{position:fixed;right:16px;bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:50;width:56px;height:56px;
+  border:0;border-radius:50%;background:var(--accent);color:#fff;font-size:30px;line-height:1;box-shadow:var(--shadow);display:none}
+:root[data-theme="dark"] .fua-fab{color:#08181d}
+button.chip{cursor:pointer;font-family:inherit}
+details>summary{list-style:none}
+details>summary::-webkit-details-marker{display:none}
+input[type=password]{padding:6px 8px;border:1px solid var(--line2);background:var(--surface2);color:var(--ink)}
+@media (max-width:760px){
+  .fua-fab{display:block}
+  header .hwrap{padding:6px 10px 4px;gap:6px}
+  .brand{font-size:16px}
+  .hnav{padding:0 4px 4px}
+  nav.tabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  nav.tabs::-webkit-scrollbar{display:none}
+  nav.tabs button{padding:8px 11px}
+  main{padding:14px 10px 100px}
+  .ptitle{font-size:21px}
+  .modal{padding:16px}
+  .ov{padding:12px 8px}
+  .fg{grid-template-columns:1fr}
+  .tile .val{font-size:21px}
+  #themeBtn{display:none}
+}

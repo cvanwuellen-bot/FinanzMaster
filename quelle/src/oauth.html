@@ -1,0 +1,26 @@
+<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Anmeldung</title>
+<style>body{font:15px Arial,sans-serif;background:#eef1f4;color:#14181d;margin:0;padding:40px 18px;text-align:center}
+a{display:inline-block;margin-top:18px;padding:12px 18px;background:#12508f;color:#fff;text-decoration:none}
+@media (prefers-color-scheme:dark){body{background:#0e1216;color:#e9eef4}}</style></head>
+<body><p id="t">Anmeldung wird abgeschlossen …</p><a id="zurueck" href="./" hidden>Zurück zur App</a>
+<script>
+/* Weiterleitung nach der Anmeldung bei Microsoft oder Google.
+   state = <dienst>.<n|w>.<zufall>:  n → zurück in die Android-App (eigenes Schema), w → Web-App. */
+(function(){
+  var q = location.search.slice(1), h = location.hash.slice(1);
+  var p = new URLSearchParams(q + '&' + h);
+  var st = (p.get('state') || '').split('.');
+  var a = document.getElementById('zurueck');
+  if (st[1] === 'n') {
+    var ziel = 'de.vanwuellen.finanzc://oauth' + (q ? '?' + q : '') + (h ? '#' + h : '');
+    a.href = ziel; a.hidden = false;
+    document.getElementById('t').textContent = 'Anmeldung erfolgreich. Falls die App sich nicht von selbst öffnet:';
+    location.replace(ziel);
+  } else {
+    try { localStorage.setItem('fua_oauth', JSON.stringify({q: q, h: h, t: Date.now()})); } catch (e) {}
+    a.hidden = false;
+    location.replace('./');
+  }
+})();
+</script></body></html>

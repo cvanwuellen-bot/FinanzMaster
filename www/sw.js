@@ -1,0 +1,23 @@
+/* Finanzübersicht C · Service Worker — hält die App offline bereit.
+   Nur die eigenen Dateien werden zwischengespeichert; Anmeldung und Cloud-Zugriffe laufen immer übers Netz. */
+const CACHE = 'fuc-app-6f8adba580';
+const DATEIEN = ['./', 'index.html', 'app-vor.js', 'app-sync.js', 'app-nach.js', 'app.css', 'config.js',
+  'xlsx.full.min.js', 'capacitor.js', 'manifest.webmanifest', 'oauth.html', 'icons/icon-192.png', 'icons/icon-512.png'];
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(DATEIEN)).then(() => self.skipWaiting()));
+});
+self.addEventListener('activate', e => {
+  e.waitUntil(caches.keys().then(k => Promise.all(k.filter(n => n !== CACHE).map(n => caches.delete(n))))
+    .then(() => self.clients.claim()));
+});
+self.addEventListener('fetch', e => {
+  const u = new URL(e.request.url);
+  if (e.request.method !== 'GET' || u.origin !== location.origin) return;
+  if (u.pathname.endsWith('/oauth.html')) return;                 // Anmeldung nie aus dem Speicher
+  if (u.pathname.endsWith('/config.js')) {                        // Einstellungen: erst Netz, dann Speicher
+    e.respondWith(fetch(e.request).then(r => { const k = r.clone(); caches.open(CACHE).then(c => c.put(e.request, k)); return r; })
+      .catch(() => caches.match(e.request)));
+    return;
+  }
+  e.respondWith(caches.match(e.request, {ignoreSearch: true}).then(r => r || fetch(e.request)));
+});
