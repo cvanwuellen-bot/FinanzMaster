@@ -1,0 +1,72 @@
+name: Android-APK bauen
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch: {}
+permissions:
+  contents: write
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: android-actions/setup-android@v3
+      - run: npm ci
+      - name: config.js aus den Repository-Variablen schreiben
+        run: node scripts/config-schreiben.js
+        env:
+          MS_CLIENT_ID: ${{ vars.MS_CLIENT_ID }}
+          MS_TENANT: ${{ vars.MS_TENANT }}
+          GOOGLE_CLIENT_ID: ${{ vars.GOOGLE_CLIENT_ID }}
+          REDIRECT_URI: ${{ vars.REDIRECT_URI }}
+          PAGES_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
+      - name: Signaturschlüssel bereitstellen
+        env:
+          KEYSTORE_B64: ${{ secrets.FUA_KEYSTORE_B64 }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/fua.keystore"
+            echo "FUA_KEYSTORE=$RUNNER_TEMP/fua.keystore" >> "$GITHUB_ENV"
+          else
+            echo "::warning::Kein Secret FUA_KEYSTORE_B64 – es entsteht eine Debug-APK (Updates erfordern dann Neuinstallation)."
+          fi
+      - name: Android-Projekt erzeugen und anpassen
+        env:
+          FUA_KEYSTORE_PASS: ${{ secrets.FUA_KEYSTORE_PASS }}
+          FUA_KEY_ALIAS: ${{ secrets.FUA_KEY_ALIAS }}
+          FUA_KEY_PASS: ${{ secrets.FUA_KEY_PASS }}
+        run: |
+          npx cap add android
+          npx cap sync android
+          node scripts/android-anpassen.js
+      - name: APK bauen
+        env:
+          FUA_KEYSTORE_PASS: ${{ secrets.FUA_KEYSTORE_PASS }}
+          FUA_KEY_ALIAS: ${{ secrets.FUA_KEY_ALIAS }}
+          FUA_KEY_PASS: ${{ secrets.FUA_KEY_PASS }}
+        run: |
+          cd android
+          chmod +x gradlew
+          if [ -n "$FUA_KEYSTORE" ]; then
+            ./gradlew --no-daemon assembleRelease
+            cp app/build/outputs/apk/release/app-release.apk ../Finanzen-C.apk
+          else
+            ./gradlew --no-daemon assembleDebug
+            cp app/build/outputs/apk/debug/app-debug.apk ../Finanzen-C.apk
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Finanzen-C-apk
+          path: Finanzen-C.apk
+      - name: Als Release veröffentlichen (bei Tag v*)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: Finanzen-C.apk
